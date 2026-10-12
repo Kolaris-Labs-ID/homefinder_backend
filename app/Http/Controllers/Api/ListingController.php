@@ -77,7 +77,7 @@ $validated = $request->validate([
         $imagePath = null;
         if ($request->hasFile('image')) {
             $file = $request->file('image');
-            $disk = 'public';
+            $disk = config('filesystems.disks.s3.bucket') ? 's3' : config('filesystems.default', 'public');
         try {
             $path = $file->store('listings', $disk);
         } catch (\Exception $e) {
@@ -93,7 +93,7 @@ $validated = $request->validate([
         $imagesPaths = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
-                $disk = 'public';
+                $disk = config('filesystems.disks.s3.bucket') ? 's3' : config('filesystems.default', 'public');
         try {
             $path = $file->store('listings', $disk);
         } catch (\Exception $e) {
@@ -152,19 +152,29 @@ $validated = $request->validate([
 
         if ($request->hasFile('image')) {
             $file = $request->file('image');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads/listings'), $filename);
-            $listing->image_url = 'uploads/listings/' . $filename;
+            $disk = config('filesystems.disks.s3.bucket') ? 's3' : config('filesystems.default', 'public');
+            try {
+                $path = $file->store('listings', $disk);
+            } catch (\Exception $e) {
+                return response()->json(['message' => 'S3/Upload Error: ' . $e->getMessage()], 500);
+            }
+            if ($disk === 's3') {
+                $imagePath = \Illuminate\Support\Facades\Storage::disk('s3')->url($path);
+            } else {
+                $imagePath = 'storage/' . $path;
+            }
+            $listing->image_url = $imagePath;
         }
 
         if ($request->hasFile('images')) {
+            $imagesPaths = [];
             foreach ($request->file('images') as $file) {
-                $disk = 'public';
-        try {
-            $path = $file->store('listings', $disk);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'S3/Upload Error: ' . $e->getMessage()], 500);
-        }
+                $disk = config('filesystems.disks.s3.bucket') ? 's3' : config('filesystems.default', 'public');
+                try {
+                    $path = $file->store('listings', $disk);
+                } catch (\Exception $e) {
+                    return response()->json(['message' => 'S3/Upload Error: ' . $e->getMessage()], 500);
+                }
                 if ($disk === 's3') {
                     $imagesPaths[] = \Illuminate\Support\Facades\Storage::disk('s3')->url($path);
                 } else {
