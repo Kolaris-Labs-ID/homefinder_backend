@@ -10,15 +10,9 @@ class DummyListingSeeder extends Seeder
 {
     public function run()
     {
-        $user = User::first(); // Assign to the first user (usually superadmin)
+        $user = User::where('role', 'superadmin')->first() ?? User::first();
         if (!$user) {
-            $user = User::create([
-                'name' => 'Super Admin',
-                'email' => 'admin@homefinder.com',
-                'password' => bcrypt('password'),
-                'role' => 'superadmin',
-                'phone_number' => '081808082100'
-            ]);
+            return;
         }
 
         $properties = [

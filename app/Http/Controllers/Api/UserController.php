@@ -98,6 +98,9 @@ class UserController extends Controller
             return response()->json(['message' => 'Anda tidak dapat menghapus akun Anda sendiri.'], 400);
         }
 
+        // Reassign any listings to the superadmin performing deletion to prevent cascade loss
+        \App\Models\Listing::where('user_id', $user->id)->update(['user_id' => $request->user()->id]);
+
         $user->delete();
 
         return response()->json(['message' => 'Pengguna berhasil dihapus.']);
