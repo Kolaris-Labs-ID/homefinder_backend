@@ -17,7 +17,7 @@ class DummyListingSeeder extends Seeder
                 'email' => 'admin@homefinder.com',
                 'password' => bcrypt('password'),
                 'role' => 'superadmin',
-                'phone_number' => '081234567890'
+                'phone_number' => '081808082100'
             ]);
         }
 
