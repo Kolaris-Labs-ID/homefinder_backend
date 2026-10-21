@@ -15,6 +15,8 @@ class Listing extends Model
         'is_rent' => 'boolean',
         'is_price_range' => 'boolean',
         'images' => 'array',
+        'features' => 'array',
+        'unit_types' => 'array',
     ];
 
     public function user(): BelongsTo

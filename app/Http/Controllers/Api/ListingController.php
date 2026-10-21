@@ -74,7 +74,8 @@ $validated = $request->validate([
             'legal_status' => 'nullable|string|max:255',
             'electricity' => 'nullable|string|max:255',
             'garage' => 'nullable|string|max:255',
-            'features' => 'nullable|json',
+            'features' => 'nullable',
+            'unit_types' => 'nullable',
         ]);
 
         $imagePath = null;
@@ -112,6 +113,13 @@ $validated = $request->validate([
 
         unset($validated['image']);
         unset($validated['images']);
+
+        if (isset($validated['features']) && is_string($validated['features'])) {
+            $validated['features'] = json_decode($validated['features'], true);
+        }
+        if (isset($validated['unit_types']) && is_string($validated['unit_types'])) {
+            $validated['unit_types'] = json_decode($validated['unit_types'], true);
+        }
 
         $listing = Listing::create(array_merge($validated, [
             'image_url' => $imagePath,
@@ -153,7 +161,8 @@ $validated = $request->validate([
             'legal_status' => 'nullable|string|max:255',
             'electricity' => 'nullable|string|max:255',
             'garage' => 'nullable|string|max:255',
-            'features' => 'nullable|json',
+            'features' => 'nullable',
+            'unit_types' => 'nullable',
             'existing_images' => 'nullable',
         ]);
 
@@ -216,6 +225,13 @@ $validated = $request->validate([
         unset($validated['image']);
         unset($validated['images']);
         unset($validated['existing_images']);
+
+        if (isset($validated['features']) && is_string($validated['features'])) {
+            $validated['features'] = json_decode($validated['features'], true);
+        }
+        if (isset($validated['unit_types']) && is_string($validated['unit_types'])) {
+            $validated['unit_types'] = json_decode($validated['unit_types'], true);
+        }
 
         $listing->fill($validated);
         $listing->save();
