@@ -13,6 +13,7 @@ class Listing extends Model
 
     protected $casts = [
         'is_rent' => 'boolean',
+        'is_price_range' => 'boolean',
         'images' => 'array',
     ];
 
