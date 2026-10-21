@@ -148,6 +148,7 @@ $validated = $request->validate([
             'electricity' => 'nullable|string|max:255',
             'garage' => 'nullable|string|max:255',
             'features' => 'nullable|json',
+            'existing_images' => 'nullable',
         ]);
 
         if ($request->hasFile('image')) {
@@ -166,8 +167,26 @@ $validated = $request->validate([
             $listing->image_url = $imagePath;
         }
 
+        // Handle existing images retained by user
+        $keptImages = [];
+        if ($request->has('existing_images')) {
+            $rawExisting = $request->input('existing_images');
+            if (is_string($rawExisting)) {
+                $keptImages = json_decode($rawExisting, true) ?? [];
+            } elseif (is_array($rawExisting)) {
+                $keptImages = $rawExisting;
+            }
+        } elseif (!$request->hasFile('images')) {
+            $currentImages = $listing->images;
+            if (is_string($currentImages)) {
+                $keptImages = json_decode($currentImages, true) ?? [];
+            } elseif (is_array($currentImages)) {
+                $keptImages = $currentImages;
+            }
+        }
+
+        $newImagesPaths = [];
         if ($request->hasFile('images')) {
-            $imagesPaths = [];
             foreach ($request->file('images') as $file) {
                 $disk = config('filesystems.disks.s3.bucket') ? 's3' : config('filesystems.default', 'public');
                 try {
@@ -176,16 +195,21 @@ $validated = $request->validate([
                     return response()->json(['message' => 'S3/Upload Error: ' . $e->getMessage()], 500);
                 }
                 if ($disk === 's3') {
-                    $imagesPaths[] = \Illuminate\Support\Facades\Storage::disk('s3')->url($path);
+                    $newImagesPaths[] = \Illuminate\Support\Facades\Storage::disk('s3')->url($path);
                 } else {
-                    $imagesPaths[] = 'storage/' . $path;
+                    $newImagesPaths[] = 'storage/' . $path;
                 }
             }
-            $listing->images = $imagesPaths;
+        }
+
+        if ($request->has('existing_images') || $request->hasFile('images')) {
+            $combinedImages = array_values(array_filter(array_merge($keptImages, $newImagesPaths)));
+            $listing->images = empty($combinedImages) ? null : array_slice($combinedImages, 0, 5);
         }
 
         unset($validated['image']);
         unset($validated['images']);
+        unset($validated['existing_images']);
 
         $listing->fill($validated);
         $listing->save();
